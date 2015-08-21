@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Public Transit Data Oddities</title>
+    <meta name="keywords" content="Nextbus,Muni">
+    <meta name="description" content="Public Transit Data Oddities.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/publictransit.css">
+</head>
+
+<body>
+    <div class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">Public Transit Explorer</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown active"><a data-toggle="dropdown" class="dropdown-toggle">SF Muni Oddities <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li class="active">
+                                <a href="#recent-stops" data-toggle="tab" data-event-type="stops">Recent Stops</a>
+                            </li>
+                            <li>
+                                <a href="#off-track-vehicles" data-toggle="tab" data-event-type="offvehicles">Off-track Vehicles</a>
+                            </li>
+                            <li>
+                                <a href="#phantom-route-vehicles" data-toggle="tab" data-event-type="phantom">Phantom Routes</a>
+                            </li>
+                            <li>
+                                <a href="#speedy-vehicles" data-toggle="tab" data-event-type="speedy">Speedy Vehicles</a>
+                            </li>
+                            <li>
+                                <a href="#overtime-vehicles" data-toggle="tab" data-event-type="overtime">Overtime Vehicles</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle">SF Muni Statistics <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                        <li>
+                            <a href="#slow-routes" data-toggle="tab">Slowest Average Routes</a>
+                            <a href="#fast-routes" data-toggle="tab">Fastest Average Routes</a>
+                            <a href="#stop-wait-interval" data-toggle="tab">Per-stop Wait Interval Average</a>
+                        </li>
+                      </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <p>Find oddities in public transit systems</p>
+        <div id="eventdescription"></div>
+    </div>
+    <div class="container">
+      <div id="eventpane" class="col-md-9">
+        <div class="eventheader">Events will show here...</div>
+      </div>
+      <div id="map"></div>
+    </div>
+    <script src="js/publictransit.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap"></script>
+</body>
+<!-- Hello World -->
+</html>
