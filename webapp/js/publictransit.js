@@ -103,6 +103,8 @@ function loadData(dataType, params)
               default:
 
             }
+            // $('#eventpane').append('<div class="pagingheader"><div class="backbutton">&lt;--[back]</div><div class="forwardbutton">[next]--&gt;</div>');
+
 
             for(var i = 0; i < data.length; i++)
             {
