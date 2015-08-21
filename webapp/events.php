@@ -10,7 +10,7 @@
 
   $mainSearchParams['index'] = 'vehicleevents';
   $mainSearchParams['type'] = 'event';
-  $mainSearchParams['body']['size'] = 30;
+  $mainSearchParams['body']['size'] = 20;
   $mainSearchParams['body']['from'] = ($offset > 1000) ? 1000 : $offset;
   $mainSearchParams['body']['sort']['eventTime'] = 'desc';
 
@@ -32,6 +32,11 @@
       break;
     case 'speedy':
       $mainSearchParams['body']['query']['term']['eventType'] = 'speeding';
+      if ($_REQUEST['veryspeedy'] === 'true')
+      {
+        $mainSearchParams['body']['filter']['script']['script'] = "doc['vehicleSpeedMPH'].value - doc['speedLimit'].value > mindelta";
+        $mainSearchParams['body']['filter']['script']['params']['mindelta'] = 10;
+      }
       break;
     default:
       # code...
@@ -64,16 +69,22 @@
     if ($includeRoute)
     {
       $route = ($type == 'phantom') ? $mainHitValue['_source']['direction']['route'] : $mainHitValue['_source']['routeTag'];
-      $routeResults = $client->get(array('index' => 'transitauthority', 'type' => 'route',
-                                          'id' => 'route-' . $route));
-      $fullResult['route'] = $routeResults['_source']['path'];
+      try
+      {
+        $routeResults = $client->get(array('index' => 'transitauthority', 'type' => 'route',
+                                            'id' => 'route-' . $route));
+        $fullResult['route'] = $routeResults['_source']['path'];
+      } catch (Exception $e){}
     }
     if ($includeNearestStop)
     {
-      $nearestStopResults = $client->get(array('index' => 'transitauthority', 'type' => 'stop',
-                                                'routing' => 'route-' . $mainHitValue['_source']['routeTag'],
-                                                'id' => $mainHitValue['_source']['nearestStop']['id']));
-      $fullResult['stop'] = $nearestStopResults;
+      try
+      {
+        $nearestStopResults = $client->get(array('index' => 'transitauthority', 'type' => 'stop',
+                                                  'routing' => 'route-' . $mainHitValue['_source']['routeTag'],
+                                                  'id' => $mainHitValue['_source']['nearestStop']['id']));
+        $fullResult['stop'] = $nearestStopResults;
+      } catch (Exception $e){}
     }
     $resultList[] = $fullResult;
   }
