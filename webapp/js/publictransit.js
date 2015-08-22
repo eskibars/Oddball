@@ -100,6 +100,10 @@ function loadData(dataType, params)
                 $('#eventpane').html("<div class=\"eventheader\">Overtime Vehicles</div>");
                 $('#eventdescription').html("Overtime Vehicles: Vehicles that are running beyond their schedule.");
                 break;
+              case 'byroute':
+                $('#eventpane').html("<div class=\"eventheader\">Events by Route</div>");
+                $('#eventdescription').html("Events by Route: Only events for a single route.");
+                break;
               default:
 
             }
@@ -210,5 +214,24 @@ $(function() {
       {
         loadData(dataType);
       }
+  });
+
+  $('#route-events').on('click', function(event) {
+    $.ajax( "counts.php" )
+          .done(function(data) {
+            geoData = [];
+            $('#eventpane').html("<div class=\"eventheader\">Events by Route</div>");
+            for(var i = 0; i < data.buckets.length; i++)
+            {
+              var eventText = data.buckets[i].key;
+              eventText += "<div class=\"eventtime\" data-route-id=\"" + data.buckets[i].key + "\">(" + data.buckets[i].doc_count + " events)</div>"
+              $('#eventpane').append('<div class="event" data-route-id="' + data.buckets[i].key + '">' + eventText + '</div>');
+            }
+
+            $('.event').on('click', function(event) {
+              var routeId = $(event.target).attr('data-route-id');
+              loadData('byroute','&route=' + routeId);
+            });
+          });
   });
 });

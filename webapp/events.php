@@ -1,6 +1,7 @@
 <?php
   $type = $_REQUEST['type'];
   $offset = intval($_REQUEST['offset']);
+  $route = $_REQUEST['route'];
 
   require '../vendor/autoload.php';
 
@@ -13,6 +14,11 @@
   $mainSearchParams['body']['size'] = 20;
   $mainSearchParams['body']['from'] = ($offset > 1000) ? 1000 : $offset;
   $mainSearchParams['body']['sort']['eventTime'] = 'desc';
+
+  if ($route)
+  {
+    $mainSearchParams['body']['query']['bool']['must']['term']['routeTag'] = $route;
+  }
 
   $includeRoute = $includeNearestStop = FALSE;
 
@@ -39,7 +45,8 @@
       }
       break;
     default:
-      # code...
+      $mainSearchParams['body']['query']['bool']['must_not']['term']['eventType'] = 'nearstop';
+      $includeRoute = TRUE;
       break;
   }
 
