@@ -6,6 +6,18 @@ use LWP::Simple;
 use Search::Elasticsearch;
 use Data::Dumper;
 
+my $maxprocesses = 2;
+
+# todo: switch this over to a proper flock or the like
+my $processid = 0;
+while (-e ($processid . ".lock") && $processid < $maxprocesses)
+{
+  $processid++;
+}
+exit if ($processid == $maxprocesses);
+open(FIL,">$processid" . ".lock");
+close(FIL);
+
 # can poll this once every 10 seconds
 my $url = 'http://webservices.nextbus.com/service/publicXMLFeed?command=vehicleLocations&a=sf-muni&t=0';
 my @servers = [ '127.0.0.1:9200' ];
@@ -88,29 +100,33 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
   my $vehicleSpeedMPH = $vehicle->{'speedKmHr'} * 0.621371;
   my $speedresults = $e->search( index => 'speedlimit', type => 'speedlimit', body => {
     filter => {
-      and => {
-        filters => [
-          {
-            range => { "properties.speedlimit" => { lt => $vehicleSpeedMPH } }
-          },
-          {
             geo_shape => {
                   geometry => {
                      shape => { type => 'circle', coordinates => $vehicle->{'location'}, radius => '10m' },
                      relation => 'intersects'
-          } } }
-        ]
-    } },
+          } } },
     size => 1,
   } );
 
   my @speedresulthits = @{ $speedresults->{'hits'}->{'hits'} };
   if ($#speedresulthits >= 0)
   {
-    $vehicle->{'eventType'} = 'speeding';
-    $vehicle->{'speedLimit'} = $speedresulthits[0]->{'_source'}{'properties'}->{'speedlimit'};
-    $vehicle->{'vehicleSpeedMPH'} = $vehicleSpeedMPH;
-    $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
+    my $maxspeedlimit = 0;
+    foreach my $speedresulthit (@speedresulthits)
+    {
+      if ($speedresulthits[0]->{'_source'}{'properties'}->{'speedlimit'} > $maxspeedlimit)
+      {
+        $maxspeedlimit = $speedresulthits[0]->{'_source'}{'properties'}->{'speedlimit'};
+      }
+    }
+    if ($maxspeedlimit < $vehicleSpeedMPH)
+    {
+      $vehicle->{'eventType'} = 'speeding';
+      $vehicle->{'speedLimit'} = $$maxspeedlimit;
+      $vehicle->{'vehicleSpeedMPH'} = $vehicleSpeedMPH;
+      $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
+    }
   }
 }
 $b->flush();
+unlink $processid . ".lock";

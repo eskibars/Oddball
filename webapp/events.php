@@ -1,6 +1,6 @@
 <?php
   $type = $_REQUEST['type'];
-  $offset = intval($_REQUEST['offset']);
+  $offset = intval($_REQUEST['start']);
   $route = $_REQUEST['route'];
 
   require '../vendor/autoload.php';
@@ -11,7 +11,7 @@
 
   $mainSearchParams['index'] = 'vehicleevents';
   $mainSearchParams['type'] = 'event';
-  $mainSearchParams['body']['size'] = 20;
+  $mainSearchParams['body']['size'] = 40;
   $mainSearchParams['body']['from'] = ($offset > 1000) ? 1000 : $offset;
   $mainSearchParams['body']['sort']['eventTime'] = 'desc';
 

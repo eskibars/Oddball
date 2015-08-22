@@ -4,6 +4,8 @@ var map;
 var geoData = [];
 var shownFeatures = [];
 var shownPins = [];
+var refreshInterval;
+var start = 0;
 
 /**
  * Update a map's viewport to fit each geometry in a dataset
@@ -65,13 +67,23 @@ function initMap() {
     center: new google.maps.LatLng(37.7833, -122.4167),
     zoom: 12
   });
-  loadData('stops');
+  autorefreshData('stops');
+}
+
+function autorefreshData(dataType, params)
+{
+  if (refreshInterval)
+    clearInterval(refreshInterval);
+
+  start = 0;
+  loadData(dataType, params);
+  refreshInterval = setInterval(function() { loadData(dataType, params); }, 60000);
 }
 
 function loadData(dataType, params)
 {
   var extraParams = (params) ? params : "";
-  $.ajax( "events.php?type=" + dataType + extraParams )
+  $.ajax( "events.php?type=" + dataType + "&start=" + start + extraParams )
         .done(function(data) {
             clearMap();
 
@@ -93,7 +105,7 @@ function loadData(dataType, params)
               case 'speedy':
                 $('#eventpane').html("<div class=\"eventheader\">Speedy Vehicles</div>");
                 $('#eventdescription').html("Speedy Vehicles: Vehicles that are over the speed limit. " +
-                      "For <b>very</b> speedy vehicles, <a href=\"javascript:loadData('speedy','&veryspeedy=true')\">click here</a>"
+                      "For <b>very</b> speedy vehicles, <a href=\"javascript:autorefreshData('speedy','&veryspeedy=true')\">click here</a>"
                 );
                 break;
               case 'overtime':
@@ -107,13 +119,33 @@ function loadData(dataType, params)
               default:
 
             }
-            // $('#eventpane').append('<div class="pagingheader"><div class="backbutton">&lt;--[back]</div><div class="forwardbutton">[next]--&gt;</div>');
-
-
+            $('#eventpane').append('<div class="pagingheader"><div class="backbutton">&larr;</div>&nbsp;<div class="forwardbutton">&rarr;</div></div>');
+            if (start === 0)
+            {
+              $('.backbutton').hide();
+            }
+            if (data.length < 40 || start > 1000)
+            {
+              $('.forwardbutton').hide();
+            }
+            $('.backbutton').on('click', function() {
+              start -= 40;
+              if (start < 0)
+                start = 0;
+              loadData(dataType, params);
+            });
+            $('.forwardbutton').on('click', function() {
+              start += 40;
+              if (start > 1000)
+                start = 1000;
+              loadData(dataType, params);
+            });
             for(var i = 0; i < data.length; i++)
             {
               var v = data[i].vehicle;
               var eventText = v._source.routeTag + " #" + v._source.id;
+              if (dataType === 'byroute')
+                eventText += " [" + v._source.eventType + "]"
               if (v._source.eventTime)
               {
                 var d = new Date(0);
@@ -212,7 +244,7 @@ $(function() {
       var dataType = $(event.target).attr('data-event-type');
       if (dataType)
       {
-        loadData(dataType);
+        autorefreshData(dataType);
       }
   });
 
@@ -230,7 +262,7 @@ $(function() {
 
             $('.event').on('click', function(event) {
               var routeId = $(event.target).attr('data-route-id');
-              loadData('byroute','&route=' + routeId);
+              autorefreshData('byroute','&route=' + routeId);
             });
           });
   });
