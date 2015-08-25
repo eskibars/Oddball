@@ -6,6 +6,7 @@ var shownFeatures = [];
 var shownPins = [];
 var refreshInterval;
 var start = 0;
+var autorefresh = false;
 
 /**
  * Update a map's viewport to fit each geometry in a dataset
@@ -76,17 +77,36 @@ function autorefreshData(dataType, params)
     clearInterval(refreshInterval);
 
   start = 0;
-  loadData(dataType, params);
-  refreshInterval = setInterval(function() { loadData(dataType, params); }, 60000);
+  loadEventData(dataType, params);
+  refreshInterval = setInterval(function() { autorefresh = true; loadEventData(dataType, params); }, 60000);
 }
 
-function loadData(dataType, params)
+function loadHeatmap(url)
+{
+  $.ajax( url )
+        .done(function(data) {
+          var heatMapData = data.map(function(loc){
+             var rObj = {};
+             rObj['location'] = new google.maps.LatLng(loc.lat, loc.lon);
+             rObj['weight'] = loc.score;
+             return rObj;
+          });
+          var heatmap = new google.maps.visualization.HeatmapLayer({
+            data: heatMapData
+          });
+          heatmap.setMap(map);
+        });
+}
+
+function loadEventData(dataType, params)
 {
   var extraParams = (params) ? params : "";
   $.ajax( "events.php?type=" + dataType + "&start=" + start + extraParams )
         .done(function(data) {
-            clearMap();
+            if (! autorefresh)
+              clearMap();
 
+            autorefresh = false;
             geoData = data;
 
             switch (dataType) {
@@ -132,13 +152,14 @@ function loadData(dataType, params)
               start -= 40;
               if (start < 0)
                 start = 0;
-              loadData(dataType, params);
+              loadEventData(dataType, params);
             });
             $('.forwardbutton').on('click', function() {
               start += 40;
               if (start > 1000)
                 start = 1000;
-              loadData(dataType, params);
+              autorefresh = true;
+              loadEventData(dataType, params);
             });
             for(var i = 0; i < data.length; i++)
             {
@@ -181,11 +202,12 @@ function loadData(dataType, params)
                   var v = data.vehicle._source;
                   var vloc = new google.maps.LatLng(parseFloat(v.location[1]),parseFloat(v.location[0]));
                   map.setCenter(vloc);
+                  var image = 'img/bus.png';
                   var marker = new google.maps.Marker({
                     position: vloc,
                     map: map,
                     animation: google.maps.Animation.DROP,
-                    label: v.routeTag
+                    icon: image
                   });
 
                   var infoContent = "<i>Speed: " + v.speedKmHr + "km/h</i><br>";
@@ -242,9 +264,15 @@ function loadData(dataType, params)
 $(function() {
   $('a[data-toggle="tab"]').on('click', function(event) {
       var dataType = $(event.target).attr('data-event-type');
+      var heatmap = $(event.target).attr('data-heatmap-datasource');
       if (dataType)
       {
         autorefreshData(dataType);
+      }
+      else if (heatmap) {
+        var heatmapDescription = $(event.target).attr('data-heatmap-description');
+        $('#eventdescription').text(heatmapDescription);
+        loadHeatmap(heatmap);
       }
   });
 

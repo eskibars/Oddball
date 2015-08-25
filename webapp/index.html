@@ -50,8 +50,17 @@
                       <ul class="dropdown-menu">
                         <li>
                             <a href="#route-events" id="route-events" data-toggle="tab">Events by Route</a>
+                        </li>
+                        <li>
+                            <a href="#route-events" id="speed-heatmap" data-heatmap-datasource="heatmap.php" data-toggle="tab" data-heatmap-description="Heatmap of where Muni speeds most often">Speeding Muni Heatmap</a>
+                        </li>
+                        <li>
                             <a href="#slow-routes" data-toggle="tab">Slowest Average Routes</a>
+                        </li>
+                        <li>
                             <a href="#fast-routes" data-toggle="tab">Fastest Average Routes</a>
+                        </li>
+                        <li>
                             <a href="#stop-wait-interval" data-toggle="tab">Per-Stop Wait Interval Average</a>
                         </li>
                       </ul>
@@ -71,7 +80,7 @@
       <div id="map"></div>
     </div>
     <script src="js/publictransit.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap&libraries=visualization"></script>
 </body>
 <!-- Hello World -->
 </html>

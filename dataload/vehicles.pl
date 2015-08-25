@@ -6,7 +6,7 @@ use LWP::Simple;
 use Search::Elasticsearch;
 use Data::Dumper;
 
-my $maxprocesses = 2;
+my $maxprocesses = 3;
 
 # todo: switch this over to a proper flock or the like
 my $processid = 0;
@@ -122,7 +122,7 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
     if ($maxspeedlimit < $vehicleSpeedMPH)
     {
       $vehicle->{'eventType'} = 'speeding';
-      $vehicle->{'speedLimit'} = $$maxspeedlimit;
+      $vehicle->{'speedLimit'} = $maxspeedlimit;
       $vehicle->{'vehicleSpeedMPH'} = $vehicleSpeedMPH;
       $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
     }
