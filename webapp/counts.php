@@ -3,10 +3,12 @@
 
   header('Content-type: application/json');
 
+  $type = ($_REQUEST['type']) ? $_REQUEST['type'] : 'nearstop';
+
   $client = new Elasticsearch\Client(array('hosts' => array('127.0.0.1:9200')));
   $mainSearchParams['index'] = 'vehicleevents';
   $mainSearchParams['type'] = 'event';
-  $mainSearchParams['body']['aggs']['vehicleevents']['filter']['not']['filter']['term']['eventType'] = 'nearstop';
+  $mainSearchParams['body']['aggs']['vehicleevents']['filter']['not']['filter']['term']['eventType'] = $type;
   $mainSearchParams['body']['aggs']['vehicleevents']['aggs']['routeevents']['terms']['field'] = 'routeTag';
   $mainSearchParams['body']['aggs']['vehicleevents']['aggs']['routeevents']['terms']['size'] = 0;
   $mainSearchParams['body']['size'] = 0;

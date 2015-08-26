@@ -4,9 +4,8 @@ use strict;
 use XML::XML2JSON;
 use LWP::Simple;
 use Search::Elasticsearch;
-use Data::Dumper;
 
-my $maxprocesses = 3;
+my $maxprocesses = 2;
 
 # todo: switch this over to a proper flock or the like
 my $processid = 0;

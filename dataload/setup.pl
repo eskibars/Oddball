@@ -44,6 +44,14 @@ my $vehiclemappings = {
   routeTag         => { 'type' => 'string', 'index' => 'not_analyzed' }
 };
 
+my $complaintmappings = {
+  point           => { 'type' => 'geo_point' },
+  request_details => { 'type' => 'string', 'index' => 'not_analyzed' },
+  updated         => { 'type' => 'date' },
+  opened          => { 'type' => 'date' },
+  case_id         => { 'type' => 'integer' }
+};
+
 my $vehicleeventmappings = $vehiclemappings;
 $vehicleeventmappings->{'eventTime'} = { 'type' => 'date', 'format' => 'date_hour_minute_second', 'numeric_resolution' => 'seconds' };
 $vehicleeventmappings->{'nearestStop'} = { properties => { distance => { 'type' => 'double'}, id => { 'type' => 'string', 'index' => 'not_analyzed' } } };
@@ -58,10 +66,10 @@ $e->indices->create( index => 'transitauthority',
                              }
                    );
 
-$e->indices->create( index => 'vehicle',
-                     body => { settings => { number_of_replicas => 0 }, _all => { 'enabled' => 0 }, mappings => { "vehicle" => { properties => $vehiclemappings } } }
-                   );
-
 $e->indices->create( index => 'vehicleevents',
                      body => { settings => { number_of_replicas => 0 }, _all => { 'enabled' => 0 }, mappings => { "event" => { properties => $vehicleeventmappings } } }
+                   );
+
+$e->indices->create( index => 'complaints',
+                    body => { settings => { number_of_replicas => 0 }, _all => { 'enabled' => 0 }, mappings => { "complaints" => { properties => $complaintmappings } } }
                    );

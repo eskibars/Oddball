@@ -4,7 +4,6 @@ use strict;
 use XML::XML2JSON;
 use LWP::Simple;
 use Search::Elasticsearch;
-use Data::Dumper;
 
 my $url = 'http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni';
 my @servers = [ '127.0.0.1:9200' ];
