@@ -1,6 +1,6 @@
 <?php
 
-$type = $_REQUEST['type'];
+$type = $_REQUEST['type'] ? $_REQUEST['type'] : 'speeding';
 $route = $_REQUEST['route'];
 
 require '../vendor/autoload.php';
@@ -11,15 +11,21 @@ $client = new Elasticsearch\Client(array('hosts' => array('127.0.0.1:9200')));
 $mainSearchParams['index'] = 'vehicleevents';
 $mainSearchParams['type'] = 'event';
 $mainSearchParams['body']['size'] = 0;
-$filters = array(['term'] => ['eventType' => 'speeding'],
+$filters = array(['term' => ['eventType' => $type]],
                  ['geo_bounding_box' => ['location' => [
                     'top_left' => ['lat' => 37.850636, 'lon' => -122.551841],
                     'bottom_right' => ['lat' => 37.665367, 'lon' => -122.276801],
                    ]]]);
-$mainSearchParams['body']['filter']['and']['filters'] = $filters;
+if ($route)
+{
+  array_push($filters, array('term' => ['routeTag' => $route]));
+}
+$mainSearchParams['body']['query']['bool']['must'] = $filters;
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['field'] = 'location';
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['precision'] = 8;
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['size'] = 1000;
+//print_r($mainSearchParams);
+//exit;
 
 $mainHits = $client->search($mainSearchParams);
 $maxCount = -1;

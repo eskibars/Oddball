@@ -7,6 +7,7 @@ var shownPins = [];
 var refreshInterval;
 var start = 0;
 var autorefresh = false;
+var heatmap;
 
 /**
  * Update a map's viewport to fit each geometry in a dataset
@@ -60,6 +61,10 @@ function clearMap()
   {
     shownPins[i].setMap(null);
   }
+  if (heatmap)
+  {
+    heatmap.setMap(null);
+  }
 }
 
 function initMap() {
@@ -91,7 +96,7 @@ function loadHeatmap(url)
              rObj['weight'] = loc.score;
              return rObj;
           });
-          var heatmap = new google.maps.visualization.HeatmapLayer({
+          heatmap = new google.maps.visualization.HeatmapLayer({
             data: heatMapData
           });
           heatmap.setMap(map);
@@ -104,42 +109,44 @@ function loadEventData(dataType, params)
   $.ajax( "events.php?type=" + dataType + "&start=" + start + extraParams )
         .done(function(data) {
             if (! autorefresh)
+            {
               clearMap();
+              switch (dataType) {
+                case 'stops':
+                  $('#eventpane').html("<div class=\"eventheader\">Recent Stops</div>");
+                  $('#eventdescription').html("Recent Stops: Show vehicles recently near a stop location. Stop, vehicle, and route all outlined on map.");
+                  break;
+                case 'offvehicles':
+                  $('#eventpane').html("<div class=\"eventheader\">Off-Route Vehicles</div>");
+                  $('#eventdescription').html("Off-Route Vehicles: Vehicles that have GPS readings >100m away from their planned route.  Vehicle and route outlined on map.");
+                  break;
+                case 'phantom':
+                  $('#eventpane').html("<div class=\"eventheader\">Phantom Routes</div>");
+                  $('#eventdescription').html("Phantom Route Vehicles: Vehicles that have a route/direction which conflict with Muni's pre-defined route. Vehicle and pre-defined route outlined on map.");
+                  break;
+                case 'speedy':
+                  $('#eventpane').html("<div class=\"eventheader\">Speedy Vehicles</div>");
+                  $('#eventdescription').html("Speedy Vehicles: Vehicles that are over the speed limit. " +
+                        "For <b>very</b> speedy vehicles, <a href=\"javascript:autorefreshData('speedy','&veryspeedy=true')\">click here</a>"
+                  );
+                  break;
+                case 'overtime':
+                  $('#eventpane').html("<div class=\"eventheader\">Overtime Vehicles</div>");
+                  $('#eventdescription').html("Overtime Vehicles: Vehicles that are running beyond their schedule.");
+                  break;
+                case 'byroute':
+                  $('#eventpane').html("<div class=\"eventheader\">Events by Route</div>");
+                  $('#eventdescription').html("Events by Route: Only events for a single route.");
+                  break;
+                default:
+
+              }
+              $('#eventpane').append('<div class="pagingheader"><div class="backbutton">&larr;</div>&nbsp;<div class="forwardbutton">&rarr;</div></div>');
+            }
 
             autorefresh = false;
             geoData = data;
 
-            switch (dataType) {
-              case 'stops':
-                $('#eventpane').html("<div class=\"eventheader\">Recent Stops</div>");
-                $('#eventdescription').html("Recent Stops: Show vehicles recently near a stop location. Stop, vehicle, and route all outlined on map.");
-                break;
-              case 'offvehicles':
-                $('#eventpane').html("<div class=\"eventheader\">Off-Route Vehicles</div>");
-                $('#eventdescription').html("Off-Route Vehicles: Vehicles that have GPS readings >100m away from their planned route.  Vehicle and route outlined on map.");
-                break;
-              case 'phantom':
-                $('#eventpane').html("<div class=\"eventheader\">Phantom Routes</div>");
-                $('#eventdescription').html("Phantom Route Vehicles: Vehicles that have a route/direction which conflict with Muni's pre-defined route. Vehicle and pre-defined route outlined on map.");
-                break;
-              case 'speedy':
-                $('#eventpane').html("<div class=\"eventheader\">Speedy Vehicles</div>");
-                $('#eventdescription').html("Speedy Vehicles: Vehicles that are over the speed limit. " +
-                      "For <b>very</b> speedy vehicles, <a href=\"javascript:autorefreshData('speedy','&veryspeedy=true')\">click here</a>"
-                );
-                break;
-              case 'overtime':
-                $('#eventpane').html("<div class=\"eventheader\">Overtime Vehicles</div>");
-                $('#eventdescription').html("Overtime Vehicles: Vehicles that are running beyond their schedule.");
-                break;
-              case 'byroute':
-                $('#eventpane').html("<div class=\"eventheader\">Events by Route</div>");
-                $('#eventdescription').html("Events by Route: Only events for a single route.");
-                break;
-              default:
-
-            }
-            $('#eventpane').append('<div class="pagingheader"><div class="backbutton">&larr;</div>&nbsp;<div class="forwardbutton">&rarr;</div></div>');
             if (start === 0)
             {
               $('.backbutton').hide();
@@ -270,6 +277,7 @@ $(function() {
         autorefreshData(dataType);
       }
       else if (heatmap) {
+        clearMap();
         var heatmapDescription = $(event.target).attr('data-heatmap-description');
         $('#eventdescription').text(heatmapDescription);
         loadHeatmap(heatmap);
