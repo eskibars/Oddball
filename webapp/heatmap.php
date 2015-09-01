@@ -24,8 +24,6 @@ $mainSearchParams['body']['query']['bool']['must'] = $filters;
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['field'] = 'location';
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['precision'] = 8;
 $mainSearchParams['body']['aggs']['vehicleevents']['geohash_grid']['size'] = 1000;
-//print_r($mainSearchParams);
-//exit;
 
 $mainHits = $client->search($mainSearchParams);
 $maxCount = -1;
