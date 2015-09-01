@@ -128,4 +128,7 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
   }
 }
 $b->flush();
-unlink $processid . ".lock";
+
+END {
+    unlink $processid . ".lock";
+}
