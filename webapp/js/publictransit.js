@@ -285,7 +285,7 @@ $(function() {
   });
 
   $('#route-events').on('click', function(event) {
-    $.ajax( "counts.php" )
+    $.ajax( "routecounts.php" )
           .done(function(data) {
             geoData = [];
             $('#eventpane').html("<div class=\"eventheader\">Events by Route</div>");
