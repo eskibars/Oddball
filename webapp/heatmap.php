@@ -28,10 +28,10 @@ else
   $mainSearchParams['body']['aggs']['events']['geohash_grid']['field'] = 'location';
 }
 
-$filters = array(['geo_bounding_box' => [$locationField => [
+array_push($filters,array('geo_bounding_box' => [$locationField => [
                     'top_left' => ['lat' => 37.850636, 'lon' => -122.551841],
                     'bottom_right' => ['lat' => 37.665367, 'lon' => -122.276801],
-                   ]]]);
+                   ]]));
 
 if ($route)
 {
