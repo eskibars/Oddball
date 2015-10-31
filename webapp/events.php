@@ -2,6 +2,9 @@
   $type = $_REQUEST['type'];
   $offset = intval($_REQUEST['start']);
   $route = $_REQUEST['route'];
+  $lat = $_REQUEST['lat'];
+  $lon = $_REQUEST['lon'];
+  $eventTime = $_REQUEST['eventtime'];
 
   require '../vendor/autoload.php';
 
@@ -11,7 +14,7 @@
 
   $mainSearchParams['index'] = 'vehicleevents';
   $mainSearchParams['type'] = 'event';
-  $mainSearchParams['body']['size'] = 40;
+  $mainSearchParams['body']['size'] = 30;
   $mainSearchParams['body']['from'] = ($offset > 1000) ? 1000 : $offset;
   $mainSearchParams['body']['sort']['eventTime'] = 'desc';
 
@@ -48,6 +51,13 @@
       $mainSearchParams['body']['query']['bool']['must_not']['term']['eventType'] = 'nearstop';
       $includeRoute = TRUE;
       break;
+  }
+
+  if (is_numeric($lat) && is_numeric($lon))
+  {
+    $mainSearchParams['body']['query']['geo_shape']['point']['shape']['type'] = 'circle';
+    $mainSearchParams['body']['query']['geo_shape']['point']['shape']['coordinates'] = array($lon, $lat);
+    $mainSearchParams['body']['query']['geo_shape']['point']['shape']['radius'] = '400m';
   }
 
   $mainResults = $client->search($mainSearchParams);

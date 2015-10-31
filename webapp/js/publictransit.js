@@ -151,18 +151,18 @@ function loadEventData(dataType, params)
             {
               $('.backbutton').hide();
             }
-            if (data.length < 40 || start > 1000)
+            if (data.length < 30 || start > 1000)
             {
               $('.forwardbutton').hide();
             }
             $('.backbutton').on('click', function() {
-              start -= 40;
+              start -= 30;
               if (start < 0)
                 start = 0;
               loadEventData(dataType, params);
             });
             $('.forwardbutton').on('click', function() {
-              start += 40;
+              start += 30;
               if (start > 1000)
                 start = 1000;
               autorefresh = true;
