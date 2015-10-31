@@ -21,7 +21,7 @@ close(FIL);
 my $url = 'http://webservices.nextbus.com/service/publicXMLFeed?command=vehicleLocations&a=sf-muni&t=0';
 my @servers = [ '127.0.0.1:9200' ];
 
-my $e = Search::Elasticsearch->new( nodes => @servers );
+my $e = Search::Elasticsearch->new( nodes => @servers, request_timeout => 9999999 );
 my $xmlcontent = get($url);
 my $XML2JSON = XML::XML2JSON->new( attribute_prefix => '');
 my $obj = $XML2JSON->xml2obj($xmlcontent);

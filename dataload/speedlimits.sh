@@ -9,7 +9,7 @@ jq -c '.features[] | select(.properties.speedlimit > 0)' speedlimits.json | sed 
 /' > speedlimits_filtered.json
 curl -XPUT http://127.0.0.1:9200/speedlimit -d '{
   "settings": {
-    "number_of_replicas":0
+    "number_of_replicas":1
   },
   "mappings": {
     "speedlimit": {
@@ -24,5 +24,4 @@ curl -XPUT http://127.0.0.1:9200/speedlimit -d '{
     }
   }
 }'
-curl -s -XPOST http://localhost:9200/_bulk --data-binary  @speedlimits_filtered.json
-
+curl -s -XPOST http://127.0.0.1:9200/_bulk --data-binary  @speedlimits_filtered.json

@@ -5,7 +5,7 @@ use Search::Elasticsearch;
 
 my @servers = [ '127.0.0.1:9200' ];
 
-my $e = Search::Elasticsearch->new( nodes => @servers );
+my $e = Search::Elasticsearch->new( nodes => @servers, request_timeout => 9999999 );
 
 eval { $e->indices->delete( index => $_ ) foreach (qw(transitauthority vehicle vehicleevents)); }; # try to delete.  ignore errors
 my $routemappings = {
@@ -53,12 +53,12 @@ my $complaintmappings = {
 };
 
 my $vehicleeventmappings = $vehiclemappings;
-$vehicleeventmappings->{'eventTime'} = { 'type' => 'date', 'format' => 'date_hour_minute_second', 'numeric_resolution' => 'seconds' };
+$vehicleeventmappings->{'eventTime'} = { 'type' => 'date', 'format' => 'epoch_second', 'numeric_resolution' => 'seconds' };
 $vehicleeventmappings->{'nearestStop'} = { properties => { distance => { 'type' => 'double'}, id => { 'type' => 'string', 'index' => 'not_analyzed' } } };
 $vehicleeventmappings->{'eventType'} = { 'type' => 'string', 'index' => 'not_analyzed' };
 
 $e->indices->create( index => 'transitauthority',
-                     body => { settings => { number_of_replicas => 0 }, mappings =>
+                     body => { settings => { number_of_replicas => 1 }, mappings =>
                                {
                                  "route" => { _all => { 'enabled' => 0 }, properties => $routemappings },
                                  "stop" => { _all => { 'enabled' => 0 }, properties => $stopmappings, _parent => { type => 'route' } },
@@ -67,9 +67,9 @@ $e->indices->create( index => 'transitauthority',
                    );
 
 $e->indices->create( index => 'vehicleevents',
-                     body => { settings => { number_of_replicas => 0 }, _all => { 'enabled' => 0 }, mappings => { "event" => { properties => $vehicleeventmappings } } }
+                     body => { settings => { number_of_replicas => 1 }, _all => { 'enabled' => 0 }, mappings => { "event" => { properties => $vehicleeventmappings } } }
                    );
 
 $e->indices->create( index => 'complaints',
-                    body => { settings => { number_of_replicas => 0 }, _all => { 'enabled' => 0 }, mappings => { "complaints" => { properties => $complaintmappings } } }
+                    body => { settings => { number_of_replicas => 1 }, _all => { 'enabled' => 0 }, mappings => { "complaints" => { properties => $complaintmappings } } }
                    );

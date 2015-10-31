@@ -7,7 +7,7 @@ use XML::XML2JSON;
 use Search::Elasticsearch;
 
 my @servers = [ '127.0.0.1:9200' ];
-my $e = Search::Elasticsearch->new( nodes => @servers );
+my $e = Search::Elasticsearch->new( nodes => @servers, request_timeout => 9999999 );
 my $b = $e->bulk_helper();
 
 # find the last complaint time

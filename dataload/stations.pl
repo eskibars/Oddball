@@ -3,16 +3,19 @@
 use strict;
 use XML::XML2JSON;
 use LWP::Simple;
+#use JSON;
 use Search::Elasticsearch;
 
 my $url = 'http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni';
 my @servers = [ '127.0.0.1:9200' ];
 
-my $e = Search::Elasticsearch->new( nodes => @servers );
+my $e = Search::Elasticsearch->new( nodes => @servers, request_timeout => 9999999 );
 my $b = $e->bulk_helper();
 my $xmlcontent = get($url);
 my $XML2JSON = XML::XML2JSON->new( attribute_prefix => '');
 my $obj = $XML2JSON->xml2obj($xmlcontent);
+
+#open(FIL,">bulk.txt");
 
 foreach my $route (@{ $obj->{'body'}->{'route'} })
 {
@@ -67,9 +70,18 @@ foreach my $route (@{ $obj->{'body'}->{'route'} })
   }
   $route->{'path'} = { 'location' => { 'type' => 'multilinestring', 'coordinates' => \@paths } };
 
+  #print FIL "{ \"index\" : { \"_index\": \"transitauthority\", \"_type\": \"route\", \"_id\": \"route-" . $route->{'tag'} . "\" } }\n";
+  #print FIL encode_json($route) . "\n";
+
+  #foreach (@dirStops)
+  #{
+  #  print FIL "{ \"index\" : { \"_index\": \"transitauthority\", \"_type\": \"stop\", \"_id\": \"stop-" . $route->{'tag'} . "-" . $_->{'tag'} . "\", \"_parent\": \"route-" . $route->{'tag'} . "\" } }\n";
+  #  print FIL encode_json($_) . "\n";
+  #}
+
   $b->add_action( index => { index => 'transitauthority', type => 'route', id => 'route-' . $route->{'tag'}, _source => $route } );
 
   $b->add_action( index => { index => 'transitauthority', type => 'stop', id => 'stop-' . $route->{'tag'} . '-' . $_->{'tag'}, _source => $_, parent => 'route-' . $route->{'tag'} } ) foreach (@dirStops);
 }
-
+#close(FIL);
 $b->flush();
