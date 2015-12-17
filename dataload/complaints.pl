@@ -11,8 +11,12 @@ my $e = Search::Elasticsearch->new( nodes => @servers, request_timeout => 999999
 my $b = $e->bulk_helper();
 
 # find the last complaint time
-my $results = $e->search( index => 'complaints', type => 'complaints', body => {
-  sort => { updated => { order => 'desc' } },
+my $results = $e->search(
+  index => 'complaints',
+  type => 'complaints',
+  body => {
+    sort => { updated => { order => 'desc' }
+  },
   size => 1
 });
 
@@ -31,6 +35,12 @@ foreach (@complaints)
   delete $_->{'point'}->{'needs_recoding'};
   $_->{'point'}->{'lat'} = delete $_->{'point'}->{'latitude'};
   $_->{'point'}->{'lon'} = delete $_->{'point'}->{'longitude'};
-  $b->add_action( index => { index => 'complaints', type => 'complaints', id => 'muni-' . $_->{'case_id'}, _source => $_ } );
+  $b->add_action( index => {
+                    index => 'complaints',
+                    type => 'complaints',
+                    id => 'muni-' . $_->{'case_id'},
+                    _source => $_
+                  }
+                );
 }
 $b->flush();

@@ -21,18 +21,23 @@ foreach my $route (@{ $obj->{'body'}->{'route'} })
 {
   # $route->{'_id'} = $route->{'tag'}; #explicitly set this
   # this is a bit of a pain.  would be nice if we could just specify the field names holding the points
-  $route->{'boundingBox'} = { 'type' => 'envelope', 'coordinates' => [
-                                                                       [ $route->{'lonMin'} + 0, $route->{'latMin'} + 0 ],
-                                                                       [ $route->{'lonMax'} + 0, $route->{'latMax'} + 0 ]
-                                                                     ]
+  $route->{'boundingBox'} = {
+                              'type' => 'envelope',
+                              'coordinates' => [
+                                                 [ $route->{'lonMin'} + 0, $route->{'latMin'} + 0 ],
+                                                 [ $route->{'lonMax'} + 0, $route->{'latMax'} + 0 ]
+                                               ]
                             };
   delete $route->{$_} foreach (qw( latMin latMax lonMin lonMax color oppositeColor )); #get rid of these
 
   #format the stops into lat/lon coordinates... again, would be nice if we could just name the fields that hold the lat/lon
   #also, it's a bit weird here: needs to be lon-lat, not lat-lon, so a bit confusing
-  my @stops = map { { 'title' => $_->{'title'}, 'tag' => $_->{'tag'}, 'stopId' => $_->{'stopId'} + 0,
-                    'location' => [ $_->{'lon'} + 0, $_->{'lat'} + 0 ]
-              } } @{ $route->{'stop'} };
+  my @stops = map { {
+                      'title' => $_->{'title'},
+                      'tag' => $_->{'tag'},
+                      'stopId' => $_->{'stopId'} + 0,
+                      'location' => [ $_->{'lon'} + 0, $_->{'lat'} + 0 ]
+                  } } @{ $route->{'stop'} };
 
   # get rid of useForUI tag under "direction", add directiontag to stops
   my @dirStops = ();
@@ -70,18 +75,22 @@ foreach my $route (@{ $obj->{'body'}->{'route'} })
   }
   $route->{'path'} = { 'location' => { 'type' => 'multilinestring', 'coordinates' => \@paths } };
 
-  #print FIL "{ \"index\" : { \"_index\": \"transitauthority\", \"_type\": \"route\", \"_id\": \"route-" . $route->{'tag'} . "\" } }\n";
-  #print FIL encode_json($route) . "\n";
+  $b->add_action( index => {
+                    index => 'transitauthority',
+                    type => 'route',
+                    id => 'route-' . $route->{'tag'},
+                    _source => $route
+                  }
+                );
 
-  #foreach (@dirStops)
-  #{
-  #  print FIL "{ \"index\" : { \"_index\": \"transitauthority\", \"_type\": \"stop\", \"_id\": \"stop-" . $route->{'tag'} . "-" . $_->{'tag'} . "\", \"_parent\": \"route-" . $route->{'tag'} . "\" } }\n";
-  #  print FIL encode_json($_) . "\n";
-  #}
-
-  $b->add_action( index => { index => 'transitauthority', type => 'route', id => 'route-' . $route->{'tag'}, _source => $route } );
-
-  $b->add_action( index => { index => 'transitauthority', type => 'stop', id => 'stop-' . $route->{'tag'} . '-' . $_->{'tag'}, _source => $_, parent => 'route-' . $route->{'tag'} } ) foreach (@dirStops);
+  $b->add_action( index => {
+                    index => 'transitauthority',
+                    type => 'stop',
+                    id => 'stop-' . $route->{'tag'} . '-' . $_->{'tag'},
+                    _source => $_,
+                    parent => 'route-' . $route->{'tag'}
+                  }
+                ) foreach (@dirStops);
 }
 #close(FIL);
 $b->flush();

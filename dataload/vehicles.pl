@@ -36,14 +36,24 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
   # for some reason, the directionTag doesn't always exact match
   # the prefix always seems to (e.g. the route may say 5____I_F00 while the vehicle may say 5____I_S00)
   my $results = $e->search( index => 'transitauthority', type => 'stop', body => {
-    filter => { bool => { must => [
-                                    { has_parent => { parent_type => 'route', filter => { term => { 'tag' => $vehicle->{'routeTag'} } } } },
+    query => { bool => { must => [
+                                    { has_parent => {
+                                        parent_type => 'route',
+                                        query => { term => { 'tag' => $vehicle->{'routeTag'} } } }
+                                    },
                                     { prefix => { directionTag => substr($vehicle->{'dirTag'},0,6) } } #for some reason, these occasionally don't exact match
                                   ]
               } },
-    sort => { _geo_distance => { 'location' => { lat => $vehicle->{'lat'}, lon => $vehicle->{'lon'} },
-                                  order => 'asc', unit => 'm' }
-            },
+    sort => {
+      _geo_distance => {
+        'location' => {
+          lat => $vehicle->{'lat'},
+          lon => $vehicle->{'lon'}
+        },
+        order => 'asc',
+        unit => 'm'
+      }
+    },
     size => 1,
   } );
 
@@ -58,7 +68,12 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
   if ($#resulthits < 0)
   {
     $vehicle->{'eventType'} = 'phantomroute';
-    $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
+    $b->add_action( index => {
+                      index => 'vehicleevents',
+                      type => 'event',
+                      _source => $vehicle
+                    }
+                  );
   }
   else
   {
@@ -69,18 +84,24 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
 
     #add the location to the vehiclestops index if it's distance is less than the last distance
     my $vehiclestopid = $vehicle->{'nearestStop'}->{'id'} . '-' . $vehicle->{'id'} . '-' . (600 * sprintf("%.0f",(time() - $vehicle->{'secsSinceReport'}) / 600.0));
-    $b->add_action( update=> { index => 'vehicleevents', type => 'event', id => $vehiclestopid,
-      upsert => $vehicle,
-      params => { distance => $vehicle->{'nearestStop'}->{'distance'} },
-      script => 'if(ctx._source.distance < distance) ctx.op = "none"'
+    $b->add_action( update=> {
+                      index => 'vehicleevents',
+                      type => 'event',
+                      id => $vehiclestopid,
+                      upsert => $vehicle,
+                      params => { distance => $vehicle->{'nearestStop'}->{'distance'} },
+                      script => 'if(ctx._source.distance < distance) ctx.op = "none"'
     } );
 
     my $offpathresults = $e->search( index => 'transitauthority', type => 'route', body => {
-      filter => { bool => { must => [
+      query => { bool => {
+                    must => [
                      { term => { tag => $vehicle->{'routeTag'} } },
-                     { nested => { path => 'path', filter => {
-                        geo_shape => {
-                          'path.location' => {
+                     { nested => {
+                       path => 'path',
+                       query => {
+                         geo_shape => {
+                           'path.location' => {
                              shape => { type => 'circle', coordinates => $vehicle->{'location'}, radius => '100m' },
                              relation => 'disjoint'
                      } } } } }
@@ -92,16 +113,25 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
     if ($offpathresults->{'hits'}->{'total'} > 0)
     {
       $vehicle->{'eventType'} = 'rogue';
-      $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
+      $b->add_action( index => {
+                        index => 'vehicleevents',
+                        type => 'event',
+                        _source => $vehicle
+                      }
+                    );
     }
   }
 
   my $vehicleSpeedMPH = $vehicle->{'speedKmHr'} * 0.621371;
   my $speedresults = $e->search( index => 'speedlimit', type => 'speedlimit', body => {
-    filter => {
+    query => {
             geo_shape => {
                   geometry => {
-                     shape => { type => 'circle', coordinates => $vehicle->{'location'}, radius => '10m' },
+                     shape => {
+                       type => 'circle',
+                       coordinates => $vehicle->{'location'},
+                       radius => '10m'
+                     },
                      relation => 'intersects'
           } } },
     size => 1,
@@ -123,7 +153,12 @@ foreach my $vehicle (@{ $obj->{'body'}->{'vehicle'} })
       $vehicle->{'eventType'} = 'speeding';
       $vehicle->{'speedLimit'} = $maxspeedlimit;
       $vehicle->{'vehicleSpeedMPH'} = $vehicleSpeedMPH;
-      $b->add_action( index => { index => 'vehicleevents', type => 'event', _source => $vehicle } );
+      $b->add_action( index => {
+                        index => 'vehicleevents',
+                        type => 'event',
+                        _source => $vehicle
+                      }
+                    );
     }
   }
 }
