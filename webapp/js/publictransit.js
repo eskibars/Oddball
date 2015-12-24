@@ -73,7 +73,11 @@ function initMap() {
     center: new google.maps.LatLng(37.7833, -122.4167),
     zoom: 12
   });
-  autorefreshData('stops');
+  if (window.location.hash) {
+    $(window.location.hash).click()
+  } else {
+    autorefreshData('stops');
+  }
 }
 
 function autorefreshData(dataType, params)
