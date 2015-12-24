@@ -27,20 +27,20 @@
 
   switch ($type) {
     case 'stops':
-      $mainSearchParams['body']['query']['term']['eventType'] = 'nearstop';
+      $mainSearchParams['body']['query']['bool']['must']['term']['eventType'] = 'nearstop';
       $includeRoute = TRUE;
       $includeNearestStop = TRUE;
       break;
     case 'offvehicles':
-      $mainSearchParams['body']['query']['term']['eventType'] = 'rogue';
+      $mainSearchParams['body']['query']['bool']['must']['term']['eventType'] = 'rogue';
       $includeRoute = TRUE;
       break;
     case 'phantom':
-      $mainSearchParams['body']['query']['term']['eventType'] = 'phantomroute';
+      $mainSearchParams['body']['query']['bool']['must']['term']['eventType'] = 'phantomroute';
       $includeRoute = TRUE;
       break;
     case 'speedy':
-      $mainSearchParams['body']['query']['term']['eventType'] = 'speeding';
+      $mainSearchParams['body']['query']['bool']['must']['term']['eventType'] = 'speeding';
       if ($_REQUEST['veryspeedy'] === 'true')
       {
         $mainSearchParams['body']['filter']['script']['script'] = "doc['vehicleSpeedMPH'].value - doc['speedLimit'].value > mindelta";
